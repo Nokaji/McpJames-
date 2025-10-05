@@ -1,6 +1,0 @@
-namespace mcpjamesplusplus
-{
-
-    
-
-} // namespace mcpjamesplusplus
