@@ -1,5 +1,10 @@
-namespace mcpjames
-{
-    
+#include "mcp.hpp"
 
-} // namespace mcpjames
+namespace mcpjames {
+    Mcp::Mcp() {
+        
+    }
+
+    Mcp::~Mcp() {
+    }
+}
