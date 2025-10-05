@@ -1,25 +1,27 @@
-# McpJames_plusplus — kernel « james »
+# McpJames_plusplus — kernel "james"
 
-Un petit kernel C++ conçu pour être utilisé dans un écosystème conforme au Model Context Protocol (MCP) et piloté via Supergateway.
+McpJames_plusplus provides the "james" kernel: a small C++/CMake executable intended to operate within a Model Context Protocol (MCP) ecosystem.
 
-## Basé sur
+Designed to simplify the management of MCP servers with Supergateway and other gateway solutions.
 
-- Architecture MCP : [Model Context Protocol — Architecture](https://modelcontextprotocol.io/docs/learn/architecture)
+## Based on
 
-## Utilise
+- [Model Context Protocol — Architecture](https://modelcontextprotocol.io/docs/learn/architecture)
 
-- Gateway : [Supergateway (supercorp-ai)](https://github.com/supercorp-ai/supergateway)
+## Uses
 
-## Aperçu
+- [Supergateway (supercorp-ai)](https://github.com/supercorp-ai/supergateway)
 
-- Kernel "james" : exécutable CMake/C++ dans ce dépôt.
-- Rôle : servir de backend (kernel) que la gateway (Supergateway) peut démarrer et interroger selon le protocole MCP.
+## Overview
 
-## Contribuer
+- Kernel "james": a C++ executable in this repository (built with CMake).
+- Purpose: act as a backend kernel that a gateway (for example Supergateway) can start and interact with according to MCP conventions.
 
-Les contributions sont bienvenues (issues, PR). Pour les changements majeurs, ouvrez d'abord une issue pour discussion.
+## Contribute
 
-## Ressources
+Contributions are welcome (issues, PRs). For larger changes, please open an issue first to discuss the approach.
+
+## Resources
 
 - [MCP docs — Architecture](https://modelcontextprotocol.io/docs/learn/architecture)
-- [Supergateway (supercorp-ai)](https://github.com/supercorp-ai/supergateway)
+- [Supergateway repo](https://github.com/supercorp-ai/supergateway)
