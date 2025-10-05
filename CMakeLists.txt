@@ -1,0 +1,1 @@
+cmake_minimum_required(VERSION 3.10)\n\nproject(McpJames VERSION 1.0 LANGUAGES CXX)\n\nset(CMAKE_CXX_STANDARD 17)\nset(CMAKE_CXX_STANDARD_REQUIRED True)\n\nadd_executable(McpJames src/main.cpp)\n
