@@ -1,0 +1,27 @@
+.idea
+.vs
+.vscode
+cmake-build-debug
+cmake-build-release
+
+codeql-custom-queries-*
+
+build
+out
+# CMake
+CMakeCache.txt
+CMakeFiles/
+CTestTestfile.cmake
+cmake_install.cmake
+# Qt Creator
+
+*.pro.user
+*.pro.user.*
+
+# Qt Creator specific files
+*.user
+*.user.*
+# Qt Creator backup files
+*.pro.user.bak
+# Qt Creator session files
+*.pro.session
