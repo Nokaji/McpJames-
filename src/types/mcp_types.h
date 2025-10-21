@@ -13,6 +13,7 @@
 #include <future>
 #include <chrono>
 #include <optional>
+#include <nlohmann/json.hpp>
 
 namespace types {
 
@@ -86,6 +87,8 @@ struct McpServerConfig {
     bool autoReconnect = true;
     int maxRetries = 3;
     int retryDelayMs = 1000;
+
+    NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE(McpServerConfig, name, description, transportType, transportConfig, autoReconnect, maxRetries, retryDelayMs);
 };
 
 // Callbacks for MCP events
@@ -113,6 +116,7 @@ struct McpServerInfo {
     ConnectionStatus status = ConnectionStatus::DISCONNECTED;
     std::chrono::steady_clock::time_point lastConnected;
     int retryCount = 0;
-};
 
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(McpServerInfo, id, config, transport, status, lastConnected, retryCount);
+};
 }
