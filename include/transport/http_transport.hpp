@@ -21,10 +21,9 @@ public:
     }
 
     void start(MessageHandler) override {
-        // HTTP is stateless, so nothing to "listen" to
     }
 
     void stop() override {}
 };
 
-} // namespace mcp
+}

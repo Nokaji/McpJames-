@@ -26,8 +26,6 @@ public:
         j["id"] = req.id;
         j["method"] = req.method;
         
-        // Ne sérialiser params que s'il n'est pas null
-        // Selon JSON-RPC 2.0, params est optionnel
         if (!req.params.is_null()) {
             j["params"] = req.params;
         }
@@ -73,4 +71,4 @@ public:
     }
 };
 
-} // namespace mcp
+}

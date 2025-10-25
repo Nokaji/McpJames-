@@ -6,6 +6,7 @@
 #include <atomic>
 #include <memory>
 #include <mutex>
+#include <condition_variable>
 #include <regex>
 #include <sstream>
 #include <iostream>
@@ -14,7 +15,7 @@ namespace mcp {
 
 class SseTransport : public Transport {
     std::atomic<bool> running{false};
-    std::atomic<bool> connected{false};  // Nouveau : indique si la connexion SSE est active
+    std::atomic<bool> connected{false};
     std::thread listener;
     std::shared_ptr<httplib::Client> client;
 
@@ -22,14 +23,11 @@ class SseTransport : public Transport {
     std::string sessionId;
     std::string lastEventId;
     std::mutex sessionMutex;
-    std::condition_variable connectionCV;  // Nouveau : pour attendre la connexion
+    std::condition_variable connectionCV;
 
-    // Buffer pour accumuler les données SSE fragmentées
     std::string sseBuffer;
 
-    // Parse les événements SSE selon le standard W3C
     void parseSSEMessage(const std::string& rawData, const MessageHandler& onMessage) {
-        // Ajouter au buffer
         sseBuffer += rawData;
         
         size_t pos = 0;
@@ -46,17 +44,15 @@ class SseTransport : public Transport {
     void processSSEEvent(const std::string& eventBlock, const MessageHandler& onMessage) {
         std::istringstream stream(eventBlock);
         std::string line;
-        std::string eventType = "message"; // Type par défaut selon spec SSE
+    std::string eventType = "message";
         std::string data;
         std::string eventId;
         
         while (std::getline(stream, line)) {
-            // Supprimer \r si présent
             if (!line.empty() && line.back() == '\r') {
                 line.pop_back();
             }
             
-            // Ignorer les lignes vides et les commentaires
             if (line.empty() || line[0] == ':') {
                 continue;
             }
@@ -69,7 +65,6 @@ class SseTransport : public Transport {
             std::string field = line.substr(0, colonPos);
             std::string value = line.substr(colonPos + 1);
             
-            // Trim le premier espace après le : selon spec SSE
             if (!value.empty() && value[0] == ' ') {
                 value = value.substr(1);
             }
@@ -86,12 +81,10 @@ class SseTransport : public Transport {
             }
         }
         
-        // Sauvegarder l'ID de l'événement pour reconnexion
         if (!eventId.empty()) {
             lastEventId = eventId;
         }
         
-        // Traiter l'événement
         handleEvent(eventType, data, onMessage);
     }
     
@@ -103,24 +96,21 @@ class SseTransport : public Transport {
         std::cout << "[SSE Transport] Event: " << eventType << std::endl;
         
         if (eventType == "endpoint") {
-            // Extraire le sessionId de l'URL endpoint
             std::regex sessionRegex(R"(\?sessionId=([a-zA-Z0-9\-]+))");
             std::smatch match;
             if (std::regex_search(data, match, sessionRegex)) {
                 {
                     std::lock_guard<std::mutex> lock(sessionMutex);
                     sessionId = match[1].str();
-                    connected.store(true);  // Marquer comme connecté
+                    connected.store(true);
                     std::cout << "[SSE Transport] ✓ Captured sessionId: " << sessionId << std::endl;
                     std::cout << "[SSE Transport] Endpoint URL: " << data << std::endl;
                 }
-                connectionCV.notify_all();  // Notifier les threads en attente
+                connectionCV.notify_all();
             }
         } else if (eventType == "message" || eventType.empty()) {
-            // Message JSON-RPC standard
             onMessage(data);
         } else {
-            // Autres types d'événements (pour extensions futures)
             std::cout << "[SSE Transport] Unknown event type: " << eventType << std::endl;
             std::cout << "[SSE Transport] Data: " << data << std::endl;
         }
@@ -134,7 +124,6 @@ public:
         stop();
     }
 
-    // Supprimer copie, permettre move
     SseTransport(const SseTransport&) = delete;
     SseTransport& operator=(const SseTransport&) = delete;
     SseTransport(SseTransport&& other) noexcept = default;
@@ -149,7 +138,6 @@ public:
         return sessionId;
     }
 
-    // Attendre que la connexion SSE soit établie et que le sessionId soit reçu
     bool waitForConnection(int timeoutMs = 10000) {
         std::unique_lock<std::mutex> lock(sessionMutex);
         return connectionCV.wait_for(lock, std::chrono::milliseconds(timeoutMs), 
@@ -157,7 +145,6 @@ public:
     }
 
     void send(const std::string& message) override {
-        // Attendre que la connexion soit établie avant d'envoyer
         if (!connected.load()) {
             std::cout << "[SSE Transport] Waiting for connection before sending..." << std::endl;
             if (!waitForConnection(10000)) {
@@ -167,7 +154,7 @@ public:
         }
         
         httplib::Client cli(config.url);
-        cli.set_connection_timeout(5, 0); // 5 secondes
+        cli.set_connection_timeout(5, 0);
         cli.set_write_timeout(5, 0);
         cli.set_read_timeout(5, 0);
         
@@ -177,19 +164,16 @@ public:
             currentSessionId = sessionId;
         }
         
-        // Construire l'URL avec sessionId si disponible
         std::string endpoint = config.messageEndpoint;
         if (!currentSessionId.empty()) {
             endpoint += "?sessionId=" + currentSessionId;
         }
         
-        // Headers pour JSON-RPC
         httplib::Headers headers = {
             {"Content-Type", "application/json"},
             {"Accept", "application/json"}
         };
         
-        // Ajouter headers personnalisés depuis config
         for (const auto& [key, value] : config.headers) {
             headers.emplace(key, value);
         }
@@ -200,7 +184,7 @@ public:
         if (res) {
             std::cout << "[SSE Transport] POST response status: " << res->status << std::endl;
             if (res->status >= 400) {
-                std::cout << "[SSE Transport] Error response: " << res->body << std::endl;
+            std::cout << "[SSE Transport] Error response: " << res->body << std::endl;
             }
         } else {
             std::cout << "[SSE Transport] POST failed - Error: " << httplib::to_string(res.error()) << std::endl;
@@ -217,41 +201,35 @@ public:
         listener = std::thread([this, onMessage]() {
             client = std::make_shared<httplib::Client>(config.url);
             
-            // Configuration des timeouts
-            client->set_connection_timeout(10, 0); // 10 secondes pour la connexion
-            client->set_read_timeout(0, 500000); // 500ms pour permettre l'arrêt régulier
+            client->set_connection_timeout(10, 0);
+            client->set_read_timeout(0, 500000);
             
-            // Désactiver la compression pour SSE
             client->set_compress(false);
             
             int attemptCount = 0;
-            const int maxAttempts = config.maxRetries > 0 ? config.maxRetries : -1; // -1 = infini
+            const int maxAttempts = config.maxRetries > 0 ? config.maxRetries : -1;
             
             while (running.load() && (maxAttempts == -1 || attemptCount < maxAttempts)) {
                 try {
                     std::cout << "[SSE Transport] Connecting to SSE endpoint: " 
                               << config.url << config.sseEndpoint;
                     
-                    // Headers SSE standard
                     httplib::Headers headers = {
                         {"Accept", "text/event-stream"},
                         {"Cache-Control", "no-cache"},
                         {"Connection", "keep-alive"}
                     };
                     
-                    // Ajouter Last-Event-ID pour reconnexion
                     if (!lastEventId.empty()) {
                         headers.emplace("Last-Event-ID", lastEventId);
                         std::cout << " (Last-Event-ID: " << lastEventId << ")";
                     }
                     std::cout << std::endl;
                     
-                    // Ajouter headers personnalisés
                     for (const auto& [key, value] : config.headers) {
                         headers.emplace(key, value);
                     }
                     
-                    // Réinitialiser le buffer
                     sseBuffer.clear();
                     
                     auto res = client->Get(
@@ -266,7 +244,6 @@ public:
                             if (!chunk.empty()) {
                                 parseSSEMessage(chunk, onMessage);
                             }
-                            // Continuer à lire les données SSE
                             return true;
                         }
                     );
@@ -276,7 +253,6 @@ public:
                         break;
                     }
                     
-                    // Marquer comme déconnecté pour forcer l'attente à la prochaine reconnexion
                     connected.store(false);
                     
                     if (!res) {
@@ -286,15 +262,13 @@ public:
                         std::cout << "[SSE Transport] HTTP error " << res->status 
                                   << ": " << res->body << std::endl;
                     } else {
-                        // La connexion s'est terminée normalement (serveur a fermé)
                         std::cout << "[SSE Transport] Connection closed by server" << std::endl;
                     }
                     
                     attemptCount++;
                     
-                    // Reconnexion avec backoff exponentiel
                     if (running.load() && (maxAttempts == -1 || attemptCount < maxAttempts)) {
-                        int delay = std::min(config.reconnectDelayMs * (attemptCount > 1 ? attemptCount : 1), 30000); // Max 30s
+                        int delay = std::min(config.reconnectDelayMs * (attemptCount > 1 ? attemptCount : 1), 30000);
                         std::cout << "[SSE Transport] Reconnecting in " << delay << "ms (attempt " 
                                   << attemptCount << ")" << std::endl;
                         std::this_thread::sleep_for(std::chrono::milliseconds(delay));
@@ -323,15 +297,12 @@ public:
         running = false;
         connected.store(false);
         
-        // Réveiller tous les threads en attente
         connectionCV.notify_all();
         
-        // Arrêter le client pour débloquer le thread
         if (client) {
             client->stop();
         }
         
-        // Attendre la fin du thread
         if (listener.joinable()) {
             listener.join();
         }
@@ -340,4 +311,4 @@ public:
     }
 };
 
-} // namespace mcp
+}

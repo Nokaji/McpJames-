@@ -1,7 +1,3 @@
-/*
- * Copyright (c) 2025 Nokaji. Tous droits réservés.
- * Ce fichier fait partie du projet Kernel-James.
- */
 #pragma once
 
 #include <string>
@@ -18,7 +14,6 @@
 namespace mcp {
 namespace type {
 
-// Configuration for HTTP transport
 struct HttpConfig {
     std::string baseUrl;
     std::map<std::string, std::string> headers;
@@ -26,7 +21,6 @@ struct HttpConfig {
     bool verifySSL = true;
 };
 
-// Configuration for WebSocket transport
 struct WebSocketConfig {
     std::string url;
     std::map<std::string, std::string> headers;
@@ -34,20 +28,18 @@ struct WebSocketConfig {
     bool verifySSL = true;
 };
 
-// Configuration for SSE (Server-Sent Events) transport
 struct SseConfig {
-    std::string url;              // Base URL (e.g., "http://localhost:8080")
-    std::string sseEndpoint = "/sse";      // SSE endpoint for receiving events
-    std::string messageEndpoint = "/message"; // HTTP endpoint for sending messages
+    std::string url;
+    std::string sseEndpoint = "/sse";
+    std::string messageEndpoint = "/message";
     std::map<std::string, std::string> headers;
     int timeoutMs = 30000;
     bool verifySSL = true;
     int reconnectDelayMs = 3000;
-    int maxRetries = -1;          // -1 = infinite retries, 0 = no retry, >0 = max attempts
+    int maxRetries = -1;
     std::string lastEventId;
 };
 
-// MCP connection status
 enum class ConnectionStatus {
     DISCONNECTED,
     CONNECTING,
@@ -56,7 +48,6 @@ enum class ConnectionStatus {
     RECONNECTING
 };
 
-// MCP message
 struct McpMessage {
     std::string id;
     std::string method;
@@ -66,7 +57,6 @@ struct McpMessage {
     bool isRequest = true;
 };
 
-// MCP server configuration
 struct McpServerConfig {
     std::string name;
     std::string description;
@@ -75,12 +65,10 @@ struct McpServerConfig {
     int retryDelayMs = 1000;
 };
 
-// Callbacks for MCP events
 using ConnectionCallback = std::function<void(const std::string& serverId, ConnectionStatus status)>;
 using MessageCallback = std::function<void(const std::string& serverId, const McpMessage& message)>;
 using ErrorCallback = std::function<void(const std::string& serverId, const std::string& error)>;
 
-// MCP transport interface
 class IMcpTransport {
 public:
     virtual ~IMcpTransport() = default;
@@ -92,7 +80,6 @@ public:
     virtual void setErrorCallback(ErrorCallback callback) = 0;
 };
 
-// Information about a connected MCP server
 struct McpServerInfo {
     std::string id;
     McpServerConfig config;
@@ -102,4 +89,4 @@ struct McpServerInfo {
     int retryCount = 0;
 };
 }
-}; // namespace mcp::type
+};
