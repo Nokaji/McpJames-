@@ -4,6 +4,9 @@
 #include "jsonrpc.hpp"
 #include <memory>
 #include <chrono>
+#include <iostream>
+#include <regex>
+#include <mutex>
 
 namespace mcp {
 
@@ -22,21 +25,42 @@ public:
         : transport(std::move(t)) {}
 
     void start() {
+        std::cout << "[MCP] Starting transport and listening for responses..." << std::endl;
         transport->start([this](const std::string& msg) {
-            auto res = JsonRpc::parseResponse(msg);
-            // gérer les callbacks si besoin
+            std::cout << "\n[MCP] <<<< Received raw message: " << msg << std::endl;
+            
+            try {
+                auto res = JsonRpc::parseResponse(msg);
+                std::cout << "[MCP] Parsed response:" << std::endl;
+                std::cout << "  - ID: " << res.id << std::endl;
+                if (!res.error.is_null()) {
+                    std::cout << "  - Error: " << res.error.dump(2) << std::endl;
+                } else {
+                    std::cout << "  - Result: " << res.result.dump(2) << std::endl;
+                }
+            } catch (const std::exception& e) {
+                std::cout << "[MCP] Error parsing response: " << e.what() << std::endl;
+            }
         });
     }
 
     nlohmann::json call(const std::string& method, const nlohmann::json& params) {
         JsonRpcRequest req{ "2.0", nextId++, method, params };
         auto msg = JsonRpc::serializeRequest(req);
+        
+        std::cout << "[MCP] >>>> Sending request (id=" << req.id << "):" << std::endl;
+        std::cout << "  - Method: " << method << std::endl;
+        std::cout << "  - Params: " << params.dump(2) << std::endl;
+        std::cout << "  - Raw JSON: " << msg << std::endl;
+        
         transport->send(msg);
-        // gestion simplifiée : ici tu pourrais attendre la réponse
         return {};
     }
 
-    void stop() { transport->stop(); }
+    void stop() { 
+        std::cout << "[MCP] Stopping transport..." << std::endl;
+        transport->stop(); 
+    }
 };
 
 } // namespace mcp

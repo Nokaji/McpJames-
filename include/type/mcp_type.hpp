@@ -43,6 +43,7 @@ struct SseConfig {
     int timeoutMs = 30000;
     bool verifySSL = true;
     int reconnectDelayMs = 3000;
+    int maxRetries = -1;          // -1 = infinite retries, 0 = no retry, >0 = max attempts
     std::string lastEventId;
 };
 
@@ -72,8 +73,6 @@ struct McpServerConfig {
     bool autoReconnect = true;
     int maxRetries = 3;
     int retryDelayMs = 1000;
-
-    NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE(McpServerConfig, name, description, autoReconnect, maxRetries, retryDelayMs);
 };
 
 // Callbacks for MCP events
@@ -101,8 +100,6 @@ struct McpServerInfo {
     ConnectionStatus status = ConnectionStatus::DISCONNECTED;
     std::chrono::steady_clock::time_point lastConnected;
     int retryCount = 0;
-
-    NLOHMANN_DEFINE_TYPE_INTRUSIVE(McpServerInfo, id, config, status, lastConnected, retryCount);
 };
 }
 }; // namespace mcp::type
