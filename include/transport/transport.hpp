@@ -15,4 +15,4 @@ public:
     virtual void stop() = 0;
 };
 
-} // namespace mcp
+}

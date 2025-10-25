@@ -73,7 +73,7 @@ struct McpServerConfig {
     int maxRetries = 3;
     int retryDelayMs = 1000;
 
-    NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE(McpServerConfig, name, description, transport, autoReconnect, maxRetries, retryDelayMs);
+    NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE(McpServerConfig, name, description, autoReconnect, maxRetries, retryDelayMs);
 };
 
 // Callbacks for MCP events

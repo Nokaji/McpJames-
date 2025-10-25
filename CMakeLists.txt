@@ -1,8 +1,3 @@
-set(MCPJAMESPLUSPLUS_SOURCES
-    src/mcp.cpp
-    src/transport/transport.cpp
-)
-
 set(MCPJAMESPLUSPLUS_HEADERS
     include/mcp.hpp
     include/jsonrpc.hpp
