@@ -7,7 +7,6 @@ set(MCPJAMESPLUSPLUS_HEADERS
     include/transport/sse_transport.hpp
 )
 
-# Si aucune source .cpp n'est fournie, on déclare une lib header-only en INTERFACE
 add_library(mcpjamesplusplus INTERFACE)
 
 find_package(CURL REQUIRED)
@@ -26,11 +25,9 @@ target_link_libraries(mcpjamesplusplus
 target_include_directories(mcpjamesplusplus
     INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
 )
 
-# Spécifique Windows
 if (WIN32)
-    target_link_libraries(mcpjamesplusplus PRIVATE ws2_32)
+    target_link_libraries(mcpjamesplusplus INTERFACE ws2_32)
 endif ()
