@@ -1,26 +1,33 @@
-set(MCPJAMESPLUSPLUS_SOURCES
-
-)
-
 set(MCPJAMESPLUSPLUS_HEADERS
-
+    include/mcp.hpp
+    include/jsonrpc.hpp
+    include/type/mcp_type.hpp
+    include/transport/transport.hpp
+    include/transport/http_transport.hpp
+    include/transport/sse_transport.hpp
 )
 
-add_library(mcpjamesplusplus STATIC ${MCPJAMESPLUSPLUS_SOURCES} ${MCPJAMESPLUSPLUS_HEADERS})
+add_library(mcpjamesplusplus INTERFACE)
 
 find_package(CURL REQUIRED)
-find_package(yaml-cpp CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
+find_package(nlohmann_json CONFIG REQUIRED)
+find_package(httplib CONFIG REQUIRED)
 
 target_link_libraries(mcpjamesplusplus
+    INTERFACE
+    CURL::libcurl
+    fmt::fmt
+    nlohmann_json::nlohmann_json
+    httplib::httplib
 )
 
 target_include_directories(mcpjamesplusplus
-        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
-        PUBLIC ${CMAKE_SOURCE_DIR}
+    INTERFACE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+    $<INSTALL_INTERFACE:include>
 )
 
-# Spécifique Windows
 if (WIN32)
-    target_link_libraries(mcpjamesplusplus PRIVATE ws2_32)
+    target_link_libraries(mcpjamesplusplus INTERFACE ws2_32)
 endif ()
