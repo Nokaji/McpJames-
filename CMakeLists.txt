@@ -1,14 +1,15 @@
 set(MCPJAMESPLUSPLUS_SOURCES
-    src/base/mcp.cpp
-    src/mcpSSE.cpp
-    src/transport/SSE.cpp
+    src/mcp.cpp
+    src/transport/transport.cpp
 )
 
 set(MCPJAMESPLUSPLUS_HEADERS
-    src/base/mcp.hpp
-    src/mcpSSE.h
-    src/types/mcp_types.h
-    src/transport/SSE.hpp
+    include/mcp.hpp
+    include/jsonrpc.hpp
+    include/type/mcp_type.hpp
+    include/transport/transport.hpp
+    include/transport/http_transport.hpp
+    include/transport/sse_transport.hpp
 )
 
 add_library(mcpjamesplusplus STATIC ${MCPJAMESPLUSPLUS_SOURCES} ${MCPJAMESPLUSPLUS_HEADERS})

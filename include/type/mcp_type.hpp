@@ -13,16 +13,10 @@
 #include <future>
 #include <chrono>
 #include <optional>
+#include "transport/transport.hpp"
 #include <nlohmann/json.hpp>
-
-namespace types {
-
-// MCP transport types
-enum class TransportType {
-    HTTP,       // HTTP REST API
-    WEBSOCKET,  // WebSocket
-    SSE,        // Server-Sent Events
-};
+namespace mcp {
+namespace type {
 
 // Configuration for HTTP transport
 struct HttpConfig {
@@ -52,13 +46,6 @@ struct SseConfig {
     std::string lastEventId;
 };
 
-// Generic transport configuration
-using TransportConfig = std::variant<
-    HttpConfig,
-    WebSocketConfig,
-    SseConfig
->;
-
 // MCP connection status
 enum class ConnectionStatus {
     DISCONNECTED,
@@ -82,13 +69,11 @@ struct McpMessage {
 struct McpServerConfig {
     std::string name;
     std::string description;
-    TransportType transportType;
-    TransportConfig transportConfig;
     bool autoReconnect = true;
     int maxRetries = 3;
     int retryDelayMs = 1000;
 
-    NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE(McpServerConfig, name, description, transportType, transportConfig, autoReconnect, maxRetries, retryDelayMs);
+    NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE(McpServerConfig, name, description, transport, autoReconnect, maxRetries, retryDelayMs);
 };
 
 // Callbacks for MCP events
@@ -112,11 +97,12 @@ public:
 struct McpServerInfo {
     std::string id;
     McpServerConfig config;
-    std::unique_ptr<IMcpTransport> transport;
+    std::unique_ptr<Transport> transport;
     ConnectionStatus status = ConnectionStatus::DISCONNECTED;
     std::chrono::steady_clock::time_point lastConnected;
     int retryCount = 0;
 
-    NLOHMANN_DEFINE_TYPE_INTRUSIVE(McpServerInfo, id, config, transport, status, lastConnected, retryCount);
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(McpServerInfo, id, config, status, lastConnected, retryCount);
 };
 }
+}; // namespace mcp::type
